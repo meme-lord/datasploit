@@ -19,8 +19,10 @@ class style:
 def get_accesstoken_zoomeye(domain):
     username = cfg.zoomeyeuser
     password = cfg.zoomeyepass
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     datalogin = '{"username": "%s","password": "%s"}' % (username, password)
-    s = requests.post("https://api.zoomeye.org/user/login", data=datalogin)
+    s = requests.post("https://api.zoomeye.org/user/login", data=datalogin, headers=headers)
+    print s.text
     responsedata = json.loads(s.text)
     access_token1 = responsedata['access_token']
     return access_token1
@@ -39,30 +41,35 @@ def banner():
 
 
 def main(domain):
-    zoomeye_results = search_zoomeye(domain)
-    return json.loads(zoomeye_results)
+    if cfg.zoomeyepass != "" and cfg.zoomeyeuser != "":
+        zoomeye_results = search_zoomeye(domain)
+        return json.loads(zoomeye_results)
+    else:
+        return [False, "INVALID_API"]
 
 
 def output(data, domain=""):
-    if 'matches' in data.keys():
-        print len(data['matches'])
-        for x in data['matches']:
-            if x['site'].split('.')[-2] == domain.split('.')[-2]:
-                if 'title' in x.keys():
-                    print "IP: %s\nSite: %s\nTitle: %s\nHeaders: %s\nLocation: %s\n" % (
-                        x['ip'], x['site'], x['title'], x['headers'].replace("\n\n", ""), x['geoinfo'])
-                else:
-                    for val in x.keys():
-                        print "%s: %s" % (val, x[val])
-    print "\n-----------------------------\n"
+    if type(data) == list and data[1] == "INVALID_API":
+        print colored(
+                style.BOLD + '\n[-] ZoomEye username and password not configured. Skipping Zoomeye Search.\nPlease refer to http://datasploit.readthedocs.io/en/latest/apiGeneration/.\n' + style.END, 'red')
+    else:
+        if 'matches' in data.keys():
+            print len(data['matches'])
+            for x in data['matches']:
+                if x['site'].split('.')[-2] == domain.split('.')[-2]:
+                    if 'title' in x.keys():
+                        print "IP: %s\nSite: %s\nTitle: %s\nHeaders: %s\nLocation: %s\n" % (
+                            x['ip'], x['site'], x['title'], x['headers'].replace("\n\n", ""), x['geoinfo'])
+                    else:
+                        for val in x.keys():
+                            print "%s: %s" % (val, x[val])
+        print "\n-----------------------------\n"
 
 
 if __name__ == "__main__":
-    try:
-        domain = sys.argv[1]
-        banner()
-        result = main(domain)
+    domain = sys.argv[1]
+    banner()
+    result = main(domain)
+    if result:
         output(result, domain)
-    except Exception as e:
-        print e
-        print "Please provide a domain name as argument"
+

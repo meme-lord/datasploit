@@ -34,12 +34,12 @@ def colorize(string):
     formattedText += string[lastMatch:]
     return formattedText
 
-
+#test
 def google_search(domain):
     url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=\"%s\"&start=1" % (
         cfg.google_cse_key, cfg.google_cse_cx, domain)
     all_results = []
-    r = requests.get(url)
+    r = requests.get(url, headers={'referer': 'www.datasploit.info/hello'})
     data = json.loads(r.content)
     if 'error' in data:
         return False, data
@@ -50,8 +50,10 @@ def google_search(domain):
             url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=\"%s\"&start=%s" % (
                 cfg.google_cse_key, cfg.google_cse_cx, domain, next_index)
             data = json.loads(requests.get(url).content)
-            print data['keys']
-            all_results += data['items']
+	    if 'error' in data:
+	       return True, all_results
+	    else:
+	        all_results += data['items']
     return True, all_results
 
 
@@ -69,7 +71,7 @@ def main(domain):
 
 def output(data, domain=""):
     if not data[0]:
-        if data[1] == "INVALID_API":
+        if type(data) == list and data[1] == "INVALID_API":
             print colored(
                 style.BOLD + '\n[-] google_cse_key and google_cse_cx not configured. Skipping paste(s) search.\nPlease refer to http://datasploit.readthedocs.io/en/latest/apiGeneration/.\n' + style.END, 'red')
         else:
@@ -79,11 +81,23 @@ def output(data, domain=""):
     else:
         print "[+] %s results found\n" % len(data[1])
         for x in data[1]:
-            print "Title: %s\nURL: %s\nSnippet: %s\n" % (x['title'], colorize(x['link']), colorize(x['snippet']))
+            print "Title: %s\nURL: %s\nSnippet: %s\n" % (x['title'].encode('utf-8'), colorize(x['link'].encode('utf-8')), colorize(x['snippet'].encode('utf-8')))
 
 
 if __name__ == "__main__":
-    try:
+        domain = sys.argv[1]
+        banner()
+        result = main(domain)
+        if result:
+            output(result, domain)
+
+
+
+
+
+'''
+
+if __name__ == "__main__":
         domain = sys.argv[1]
         banner()
         result = main(domain)
@@ -91,3 +105,4 @@ if __name__ == "__main__":
     except Exception as e:
         print e
         print "Please provide a domain name as argument"
+'''

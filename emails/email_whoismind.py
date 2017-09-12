@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import base
-import config as cfg
 import sys
 import requests
 from bs4 import BeautifulSoup
@@ -28,7 +27,7 @@ def main(email):
     for at in atag:
         if at.text in at['href']:
             domains.append(at.text)
-    domains = set(domains)
+    domains = list(set(domains))
     return domains
 
 
